@@ -20,7 +20,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-ALLOWED_DOMAINS = {"polito.it", "unito.it"}
+# Updated allowed domains to reflect student domain for Politecnico di Torino
+ALLOWED_DOMAINS = {"studenti.polito.it", "unito.it"}
 MAGIC_TOKEN_TTL = 15 * 60  # 15 minutes
 MIN_PHOTOS = 3
 MAX_PHOTOS = 8
@@ -31,7 +32,8 @@ def is_valid_domain(email: str) -> bool:
     try:
         v = validate_email(email, check_deliverability=False)
         domain = v.domain.lower()
-        return any(domain == d or domain.endswith("@" + d) for d in ALLOWED_DOMAINS) or domain in ALLOWED_DOMAINS
+        # Accept exact domain matches only
+        return domain in ALLOWED_DOMAINS
     except EmailNotValidError:
         return False
 
@@ -79,7 +81,7 @@ def root():
 def send_magic_link(payload: SendMagicLinkRequest):
     email = payload.email.lower()
     if not is_valid_domain(email):
-        raise HTTPException(status_code=400, detail="Email domain not allowed. Use your student email (polito/unito).")
+        raise HTTPException(status_code=400, detail="Email domain not allowed. Use your student email (studenti.polito.it / unito.it).")
 
     token = secrets.token_urlsafe(24)
     expires_at = int(time.time()) + MAGIC_TOKEN_TTL
